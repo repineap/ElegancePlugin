@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ElegancePluginFileSave
+Bundle-SymbolicName: ElegancePluginFileSave;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Automatic-Module-Name: ElegancePlugin
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Require-Bundle: org.eclipse.core.resources;bundle-version="3.17.0",
+ org.eclipse.ui;bundle-version="3.201.0",
+ org.eclipse.core.runtime;bundle-version="3.25.0"
+Bundle-ActivationPolicy: lazy
+Bundle-Vendor: repineap
+Bundle-ClassPath: src/javaparser-core-3.25.5.jar,
+ .
