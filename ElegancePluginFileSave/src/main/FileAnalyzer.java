@@ -27,6 +27,7 @@ public class FileAnalyzer {
 	private String name;
 	private HashMap<String, Method> methodMap;
 	private double loopCost, loopDepthCost, branchCost, branchDepthCost, closeRatio, overRatio;
+	public static final int version = 0;
 
 	public FileAnalyzer(String filePath) {
 		this.file = new File(filePath);
@@ -99,6 +100,11 @@ public class FileAnalyzer {
 		try {
 			BufferedReader reader = new BufferedReader(
 			           new InputStreamReader(new FileInputStream(file), "UTF-8"));
+			int configVersion = Integer.parseInt(reader.readLine().split(" ")[1]);
+			if (configVersion < version) {
+				reader.close();
+				return false;
+			}
 			String line;
             String paramLine = "";
             boolean param = true;
