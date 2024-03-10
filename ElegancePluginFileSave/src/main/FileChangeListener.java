@@ -24,7 +24,6 @@ public class FileChangeListener implements IResourceChangeListener {
 
 	@Override
 	public void resourceChanged(IResourceChangeEvent changeEvent) {
-		System.out.println("CHANGE DETECTED");
 		IResourceDelta delta = changeEvent.getDelta();
 		if (delta != null) {
             try {
@@ -37,19 +36,10 @@ public class FileChangeListener implements IResourceChangeListener {
 								
 								@Override
 								public IStatus runInWorkspace(IProgressMonitor arg0) throws CoreException {
-									//Gets the changed java file
-		                        	IWorkspace workspace = ResourcesPlugin.getWorkspace();
-		                            IPath workspacePath = workspace.getRoot().getLocation();
-
-		                            // Convert relative path to IPath
-		                            IPath relativeIPath = new Path(resource.getFullPath().toString());
-
-		                            // Convert relative path to absolute path
-		                            IPath absoluteIPath = workspacePath.append(relativeIPath);
 
 		                            // Get the OS-specific string
-		                            String absolutePath = absoluteIPath.toOSString();
-		                            FileAnalyzer fileAnalyzer = new FileAnalyzer(absolutePath);
+		                            String absolutePath = resource.getLocation().toOSString();
+		                            FileAnalyzer fileAnalyzer = new FileAnalyzer(absolutePath, resource);
 		                            
 		                            if (!fileAnalyzer.evaluateMethods()) return Status.CANCEL_STATUS;
 		                            return Status.OK_STATUS;

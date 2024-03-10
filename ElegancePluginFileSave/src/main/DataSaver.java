@@ -16,8 +16,8 @@ public class DataSaver {
 	String filePath;
 	
 	public DataSaver(String funcName, String srcPath) {
-		folderPath = srcPath + "data" + File.separator;
-		filePath = folderPath + funcName + ".txt";
+		folderPath = srcPath + "TestResults" + File.separator;
+		filePath = folderPath + funcName + "-compdata.txt";
 
         // Create a File object representing the folder
         File folder = new File(folderPath);

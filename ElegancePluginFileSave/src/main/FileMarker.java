@@ -19,8 +19,8 @@ public class FileMarker {
 	/*
 	 * Clears the markers on the given file with my labeled name
 	 */
-	public static void deleteMarkers(File file) {
-		IResource resource = ResourcesPlugin.getWorkspace().getRoot().getFileForLocation(org.eclipse.core.runtime.Path.fromOSString(file.getAbsolutePath()));
+	public static void deleteMarkers(IResource resource) {
+		
         try {
         	resource.deleteMarkers("ElegancePlugin.methodMarker", true, IFile.DEPTH_INFINITE);
 		} catch (CoreException e1) {
@@ -31,9 +31,8 @@ public class FileMarker {
 	/*
 	 * Creates a marker on a file at the lineNumber with the message and severity connected
 	 */
-	public static void createMarker(File file, int lineNumber, String message, int severity) {
+	public static void createMarker(File file, IResource resource, String desc, int lineNumber, String message, int severity) {
         // Get the IFile object corresponding to the File object
-        IResource resource = ResourcesPlugin.getWorkspace().getRoot().getFileForLocation(org.eclipse.core.runtime.Path.fromOSString(file.getAbsolutePath()));
         // Check if the IFile object is valid
         if (resource != null && resource.exists()) {
             try {
@@ -42,7 +41,7 @@ public class FileMarker {
 				myMarker.setAttribute(IMarker.SEVERITY, severity);
 				myMarker.setAttribute(IMarker.MESSAGE, message);
 				myMarker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_NORMAL);
-				int[] linePos = lineCharPositions(file, lineNumber);
+				int[] linePos = lineCharPositions(file, desc, lineNumber);
 				myMarker.setAttribute(IMarker.CHAR_START, linePos[0]);
 				myMarker.setAttribute(IMarker.CHAR_END, linePos[1]);
 				
@@ -60,23 +59,29 @@ public class FileMarker {
 	/*
 	 * Helper method used to calculate where to mark the file
 	 */
-	public static int[] lineCharPositions(File file, int lineNumber) {
+	public static int[] lineCharPositions(File file, String description, int lineNumber) {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
+        	StringBuilder line = new StringBuilder();
+        	int c;
             int currentLine = 1;
             int charStart = 0;
-            int charEnd = 0;
-
-            while ((line = reader.readLine()) != null) {
-                charEnd = charStart + line.length() + 1;
-                int firstP = line.indexOf('p');
-
-                if (currentLine == lineNumber) {
-                    return new int[] {charStart + firstP, charEnd};
-                }
-
-                charStart = charEnd + 1;
-                currentLine++;
+            int curChar = 0;
+            while ((c = reader.read()) != -1) {
+            	line.append((char) c);
+            	curChar++;
+            	
+            	if (c == '\n') {
+            		if (currentLine == lineNumber) {
+            			String correctLine = line.toString();
+            			int pos = correctLine.indexOf(description);
+            			
+            			charStart += pos;
+            			return new int[] {charStart, charStart + description.length()};
+            		}
+            		currentLine++;
+            		charStart = curChar;
+            		line = new StringBuilder();
+            	}
             }
         } catch (IOException e) {
             e.printStackTrace();

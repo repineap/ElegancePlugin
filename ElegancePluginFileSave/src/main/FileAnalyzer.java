@@ -7,8 +7,10 @@ import java.io.FileNotFoundException;
 //import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IResource;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
@@ -27,10 +29,12 @@ public class FileAnalyzer {
 	private String name;
 	private HashMap<String, Method> methodMap;
 	private double loopCost, loopDepthCost, branchCost, branchDepthCost, closeRatio, overRatio;
-	public static final int version = 0;
+	private IResource resource;
+	public static final double VERSION = 1.5;
 
-	public FileAnalyzer(String filePath) {
+	public FileAnalyzer(String filePath, IResource r) {
 		this.file = new File(filePath);
+		this.resource = r;
 		this.filePath = filePath;
 		this.name = file.getName();
 		this.methodMap = new HashMap<>();
@@ -90,18 +94,24 @@ public class FileAnalyzer {
 	}
 	
 	public boolean evaluateMethods() {
-		HashMap<String, Method> configMap = new HashMap<>();
-		String srcPath = getSrcPath(filePath);
-		srcPath += this.name.split("\\.")[0] + "-config.txt";
-		File file = new File(srcPath);
+		HashMap<String, Double> configMap = new HashMap<>();
+		String configPath = "";
+		for (String s : filePath.split(Pattern.quote(File.separator))) {
+			if (s.equals("src")) {
+				break;
+			}
+			configPath += s + File.separator;
+		}
+		configPath += "configs" + File.separator + this.name.split("\\.")[0] + "-config.txt";
+		File file = new File(configPath);
 		if (!file.exists()) {
 			return false;
 		}
 		try {
 			BufferedReader reader = new BufferedReader(
 			           new InputStreamReader(new FileInputStream(file), "UTF-8"));
-			int configVersion = Integer.parseInt(reader.readLine().split(" ")[1]);
-			if (configVersion < version) {
+			double configVersion = Double.parseDouble(reader.readLine().split(" ")[1]);
+			if (configVersion < VERSION) {
 				reader.close();
 				return false;
 			}
@@ -116,8 +126,8 @@ public class FileAnalyzer {
             	}
             	String[] lineSplit = line.split(":");
                 String name = lineSplit[0];
-                String configTree = lineSplit[1];
-                configMap.put(name, new Method(name, configTree));
+                String configScore = lineSplit[1];
+                configMap.put(name, Double.parseDouble(configScore));
             }
             setParamValues(paramLine);
             reader.close();
@@ -128,15 +138,22 @@ public class FileAnalyzer {
 		if (!this.generateMethodList(this.file)) {
 			return false;
 		}
-		FileMarker.deleteMarkers(this.file);
+		FileMarker.deleteMarkers(this.resource);
 		for (Method m : methodMap.values()) {
-			double complexityVal = m.compareToConfig(configMap.get(m.getName().split("_")[0]), this.loopCost, this.loopDepthCost, this.branchCost, this.branchDepthCost);
-			if (complexityVal <= 0 || Double.isNaN(complexityVal) || complexityVal == Double.POSITIVE_INFINITY) {
+			if (!m.isImplemented()) {
 				continue;
 			}
-			handleComplexityVal(complexityVal, m.getLineNumber());
+			if (configMap.get(m.getName().split("_")[0]) == null) {
+				continue;
+			}
+			double configComplexity = configMap.get(m.getName().split("_")[0]);
+			double complexityVal = m.compareToConfig(configComplexity, this.loopCost, this.loopDepthCost, this.branchCost, this.branchDepthCost);
+			if (complexityVal < 0 || Double.isNaN(complexityVal) || complexityVal == Double.POSITIVE_INFINITY) {
+				continue;
+			}
+			handleComplexityVal(complexityVal, m.getDeclaration(), m.getLineNumber());
 			DataSaver ds = new DataSaver(m.getName(), getSrcPath(filePath));
-			ds.writeData(complexityVal + "\t" + m.toString());
+			ds.writeData(complexityVal + " " + overRatio + " " + m.toString());
 		}
 		return true;
 	}
@@ -151,13 +168,13 @@ public class FileAnalyzer {
 		this.overRatio = Double.parseDouble(paramList[5]);
 	}
 
-	private void handleComplexityVal(double complexityVal, int lineNumber) {
+	private void handleComplexityVal(double complexityVal, String desc, int lineNumber) {
 		if (complexityVal < this.closeRatio) {
-			FileMarker.createMarker(file, lineNumber, "This method is good\nScore: " + complexityVal, IMarker.SEVERITY_INFO);
+			return;
 		} else if (complexityVal < this.overRatio) {
-			FileMarker.createMarker(this.file, lineNumber, "This method is close to crossing the line\nScore: " + complexityVal, IMarker.SEVERITY_WARNING);
+			FileMarker.createMarker(this.file, this.resource, desc, lineNumber, "This method is getting complex, try to not make it more so\nScore: " + complexityVal, IMarker.SEVERITY_INFO);
 		} else {
-			FileMarker.createMarker(this.file, lineNumber, "This method is over the line\nScore: " + complexityVal, IMarker.SEVERITY_ERROR);
+			FileMarker.createMarker(this.file, this.resource, desc, lineNumber, "This method is too complex, consider another approach\nScore: " + complexityVal, IMarker.SEVERITY_WARNING);
 		}
 	}
 

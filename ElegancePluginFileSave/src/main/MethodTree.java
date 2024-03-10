@@ -2,15 +2,18 @@ package main;
 import java.util.ArrayList;
 
 import java.util.Optional;
+import java.util.Random;
 import java.util.Stack;
 
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.ConditionalExpr;
+import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.stmt.ForEachStmt;
 import com.github.javaparser.ast.stmt.ForStmt;
 import com.github.javaparser.ast.stmt.IfStmt;
 import com.github.javaparser.ast.stmt.Statement;
+import com.github.javaparser.ast.stmt.ThrowStmt;
 import com.github.javaparser.ast.stmt.WhileStmt;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
@@ -20,6 +23,8 @@ import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
  *
  */
 public class MethodTree {
+	
+	private boolean implemented;
 
 	enum type {
 		root, branch, elseif, loop, methodCall
@@ -31,7 +36,9 @@ public class MethodTree {
 	public MethodTree(MethodDeclaration methodNode) {
 		this.methodNode = methodNode;
 		this.rootNode = new StatementBlock(type.root, "root");
-		this.methodNode.accept(new ControlFlowStatementVisitor(rootNode), null);
+		ControlFlowStatementVisitor v = new ControlFlowStatementVisitor(rootNode);
+		this.methodNode.accept(v, null);
+		this.implemented = v.isImplemented();
 	}
 
 	public MethodTree(String encryptedString, String name) {
@@ -77,11 +84,16 @@ public class MethodTree {
 		}
 		return key;
 	}
+	
+	public boolean isImplemented() {
+		return this.implemented;
+	}
 
 	public String unshiftString(String inputString, int key) {
 		String returnString = "";
+		Random r = new Random(key);
 		for (int c : inputString.toCharArray()) {
-			returnString += (char) (c - key);
+			returnString += (char) (c - r.nextInt(-5, 5));
 		}
 		return returnString;
 	}
@@ -94,8 +106,10 @@ public class MethodTree {
 	public String toEncryptedString() {
 		String returnString = "";
 		String treeString = this.toString();
+		int key = getEncryptionKey(methodNode.getNameAsString());
+		Random r = new Random(key);
 		for (int c : treeString.toCharArray()) {
-			returnString += (char) (c + getEncryptionKey(methodNode.getNameAsString()));
+			returnString += (char) (c + r.nextInt(-5, 5));
 		}
 		return returnString;
 	}
@@ -172,9 +186,15 @@ public class MethodTree {
 	private static class ControlFlowStatementVisitor extends VoidVisitorAdapter<Void> {
 
 		private StatementBlock thisBlock;
+		private boolean implemented;
 
 		public ControlFlowStatementVisitor(StatementBlock block) {
 			this.thisBlock = block;
+			this.implemented = true;
+		}
+		
+		public boolean isImplemented() {
+			return implemented;
 		}
 
 		@Override
@@ -222,6 +242,17 @@ public class MethodTree {
 			StatementBlock newBlock = new StatementBlock(type.branch, "ternary");
 			thisBlock.addChild(newBlock);
 			super.visit(ternaryExp, arg);
+		}
+		
+		@Override
+		public void visit(ThrowStmt throwExp, Void arg) {
+			if (throwExp.getExpression() instanceof ObjectCreationExpr) {
+	            ObjectCreationExpr objectCreationExpr = (ObjectCreationExpr) throwExp.getExpression();
+
+	            if ("UnsupportedOperationException".equals(objectCreationExpr.getType().getNameAsString())) {
+	                this.implemented = false;
+	            }
+	        }
 		}
 	}
 
