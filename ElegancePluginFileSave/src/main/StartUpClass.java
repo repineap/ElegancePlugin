@@ -7,7 +7,7 @@ import org.eclipse.ui.IStartup;
 /*
  * Registers the listener to the workspace, allowing the plugin to work and run the code when files are changed or save
  */
-public class StartUpClass implements IStartup{
+public class StartUpClass implements IStartup {
 
 	@Override
 	public void earlyStartup() {
