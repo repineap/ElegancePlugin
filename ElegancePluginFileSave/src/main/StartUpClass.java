@@ -11,6 +11,7 @@ public class StartUpClass implements IStartup {
 
 	@Override
 	public void earlyStartup() {
+		//A workspace is the folder in which Java programming is done, set on the launch of Eclipse
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		workspace.addResourceChangeListener(new FileChangeListener());
 		

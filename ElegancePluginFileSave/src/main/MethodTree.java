@@ -36,15 +36,18 @@ public class MethodTree {
 	public MethodTree(MethodDeclaration methodNode) {
 		this.methodNode = methodNode;
 		this.rootNode = new StatementBlock(type.root, "root");
+		//Starts the process of generating the parsed tree by visiting the file
 		ControlFlowStatementVisitor v = new ControlFlowStatementVisitor(rootNode);
 		this.methodNode.accept(v, null);
 		this.implemented = v.isImplemented();
 	}
 
+	//Legacy method from old form of complexity storage
 	public MethodTree(String encryptedString, String name) {
 		buildFromString(unshiftString(encryptedString, getEncryptionKey(name)));
 	}
 
+	//Legacy method for old form of complexity storage
 	private void buildFromString(String treeString) {
 		Stack<StatementBlock> s = new Stack<>();
 		this.rootNode = new StatementBlock(type.root, "root");
@@ -114,6 +117,7 @@ public class MethodTree {
 		return returnString;
 	}
 
+	//Starts the recursive computation process from the root
 	public double calculateComplexity(double loopCost, double loopDepthCost, double branchCost,
 			double branchDepthCost) {
 		return this.rootNode.calculateComplexity(loopCost, loopDepthCost, branchCost, branchDepthCost);
@@ -123,6 +127,10 @@ public class MethodTree {
 		this.rootNode.printTree(0);
 	}
 
+	/*
+	 * A class used to store the structure of the file as a tree
+	 * Similar to a node class in a binary tree implementation
+	 */
 	private static class StatementBlock {
 
 		public type type;
@@ -135,6 +143,7 @@ public class MethodTree {
 			children = new ArrayList<>();
 		}
 
+		//Computes the complexity score with the formula that is listed in the README file
 		public double calculateComplexity(double loopCost, double loopDepthCost, double branchCost,
 				double branchDepthCost) {
 			double thisCost = 0;
@@ -183,8 +192,13 @@ public class MethodTree {
 		}
 	}
 
+	/*
+	 * Class used to visit the java code and generate the structure starting from the root
+	 * Extension of the JavaParser construct 
+	 */
 	private static class ControlFlowStatementVisitor extends VoidVisitorAdapter<Void> {
 
+		//thisBlock is the parent block that all the children are added to
 		private StatementBlock thisBlock;
 		private boolean implemented;
 
@@ -197,10 +211,14 @@ public class MethodTree {
 			return implemented;
 		}
 
+		//Visits for loops, the structure of all of these is quite similar so I will only annotate this an the if node one
 		@Override
 		public void visit(ForStmt forNode, Void arg) {
+			//Generates a new block that will represent the for loop in the body of thisBlock
 			StatementBlock newBlock = new StatementBlock(type.loop, "for");
+			//New block is added as a child
 			thisBlock.addChild(newBlock);
+			//This for loop's body is visited with it as the parent to all of the things inside of it
 			forNode.getBody().accept(new ControlFlowStatementVisitor(newBlock), null);
 		}
 
@@ -211,12 +229,16 @@ public class MethodTree {
 			eforNode.getBody().accept(new ControlFlowStatementVisitor(newBlock), null);
 		}
 
+		//If statements are visited different because in the JavaParser representation else and else if statements are treated as children
+		//of the if statement leading to complexity blowup
 		@Override
 		public void visit(IfStmt ifNode, Void arg) {
 			StatementBlock newBlock = new StatementBlock(type.branch, "if");
 			thisBlock.addChild(newBlock);
+			//Gets the children inside of the if statment
 			ifNode.getThenStmt().accept(new ControlFlowStatementVisitor(newBlock), null);
 			Optional<Statement> elseOptional = ifNode.getElseStmt();
+			//Checks if there is an else if or else connected to this if
 			if (elseOptional.isPresent()) {
 				Statement elseNode = elseOptional.get();
 				if (elseNode instanceof BlockStmt) {
@@ -237,6 +259,7 @@ public class MethodTree {
 			whileNode.getBody().accept(new ControlFlowStatementVisitor(newBlock), null);
 		}
 
+		//Includes ternary operations as a branch statement
 		@Override
 		public void visit(ConditionalExpr ternaryExp, Void arg) {
 			StatementBlock newBlock = new StatementBlock(type.branch, "ternary");
@@ -244,6 +267,7 @@ public class MethodTree {
 			super.visit(ternaryExp, arg);
 		}
 		
+		//Visited the UnsupportedOperationException lines to determine if the method has been implemented yet
 		@Override
 		public void visit(ThrowStmt throwExp, Void arg) {
 			if (throwExp.getExpression() instanceof ObjectCreationExpr) {

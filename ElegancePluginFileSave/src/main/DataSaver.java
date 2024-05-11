@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 /**
- * In charge of the saving of data which gets passed to it from the FileAnalyzer
+ * In charge of the saving of data which gets passed to it from the FileAnalyzer to the src/TestResults/{functionName}-compdata.txt
  * @author repineap
  *
  */

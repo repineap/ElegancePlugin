@@ -17,10 +17,12 @@ public class Method {
 		this.declaration = md.getDeclarationAsString();
 		this.name = md.getNameAsString();
 		this.content = md.toString();
+		//This is where the java files are parsed, when the MethodTree object is created
 		this.methodTree = new MethodTree(md);
 		this.lineNumber = md.getBegin().get().line;
 	}
 	
+	//Used for when the solutions were stored as trees rather than as pure numbers
 	public Method(String name, String encryptedString) {
 		this.name = name;
 		this.content = null;
@@ -68,8 +70,11 @@ public class Method {
 		return this.methodTree.calculateComplexity(loopCost, loopDepthCost, branchCost, branchDepthCost);
 	}
 
+	
 	public double compareToConfig(Double configComplexity, double loopCost, double loopDepthCost, double branchCost, double branchDepthCost) {
+		//Call to the MethodTree to actually compute the value
 		double thisComplexity = this.methodTree.calculateComplexity(loopCost, loopDepthCost, branchCost, branchDepthCost);
+		//If there is no score for the solution, return the pure score of the user code
 		if (configComplexity == 0) {
 			return thisComplexity;
 		}

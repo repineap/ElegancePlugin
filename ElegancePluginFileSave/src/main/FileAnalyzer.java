@@ -53,6 +53,8 @@ public class FileAnalyzer {
 		return methodMap.get(methodName);
 	}
 
+	//Uses the below MethodVisitor to collect pointers to the methods to be later analyzed for their score,
+	//this is where the method trees are generated
 	public boolean generateMethodList(File fileToAnalyze) {
 		CompilationUnit cu;
 		try {
@@ -88,12 +90,15 @@ public class FileAnalyzer {
 		}
 	}
 	
+	//Used to get the filepath to the src/ directory
 	private String getSrcPath(String originalPath) {
 		int srcIndex = originalPath.indexOf("src");
 		return originalPath.substring(0, srcIndex+3+1);
 	}
 	
+	//This method handles the bulk of the work done in this plugin
 	public boolean evaluateMethods() {
+		
 		HashMap<String, Double> configMap = new HashMap<>();
 		String configPath = "";
 		for (String s : filePath.split(Pattern.quote(File.separator))) {
@@ -102,6 +107,7 @@ public class FileAnalyzer {
 			}
 			configPath += s + File.separator;
 		}
+		//Based on the name of the file being analyzed, determines the config file to look through
 		configPath += "configs" + File.separator + this.name.split("\\.")[0] + "-config.txt";
 		File file = new File(configPath);
 		if (!file.exists()) {
@@ -118,6 +124,7 @@ public class FileAnalyzer {
 			String line;
             String paramLine = "";
             boolean param = true;
+            //Reads in the config complexity numbers from the file from above, as well as setting the computation parameters
             while ((line = reader.readLine()) != null) {
             	if (param) {
             		paramLine = line;
@@ -127,31 +134,43 @@ public class FileAnalyzer {
             	String[] lineSplit = line.split(":");
                 String name = lineSplit[0];
                 String configScore = lineSplit[1];
+                //Stores the complexity scores
                 configMap.put(name, Double.parseDouble(configScore));
             }
+            //Updates the parameter values to be used with this computation
             setParamValues(paramLine);
             reader.close();
 		} catch (Exception e) {
 			System.err.println(e.getMessage());
 			return false;
 		}
+		//Calls to generate the Method and MethodTree objects for all of the methods in the file
 		if (!this.generateMethodList(this.file)) {
 			return false;
 		}
+		//Markers are not automatically cleared when a new one is created so this makes sure to clear up the files and make the program maintain performance
 		FileMarker.deleteMarkers(this.resource);
 		for (Method m : methodMap.values()) {
+			//Checks for the line throwing an UnsupportedOperationException
 			if (!m.isImplemented()) {
 				continue;
 			}
+			//If there is no configuration for the specified method, typically helper methods, returns
+			//.split() is a relic for testing that will not appear in normal programming
 			if (configMap.get(m.getName().split("_")[0]) == null) {
 				continue;
 			}
+			//From the generated map, gets the complexity number that was stored in the config file
 			double configComplexity = configMap.get(m.getName().split("_")[0]);
+			//Using the set param values, calculates the complexity through the method object
 			double complexityVal = m.compareToConfig(configComplexity, this.loopCost, this.loopDepthCost, this.branchCost, this.branchDepthCost);
+			//Edge case checking to make sure the system runs smoothly
 			if (complexityVal < 0 || Double.isNaN(complexityVal) || complexityVal == Double.POSITIVE_INFINITY) {
 				continue;
 			}
+			
 			handleComplexityVal(complexityVal, m.getDeclaration(), m.getLineNumber());
+			//Saves the data for later analysis
 			DataSaver ds = new DataSaver(m.getName(), getSrcPath(filePath));
 			ds.writeData(complexityVal + " " + overRatio + " " + m.toString());
 		}
@@ -168,6 +187,7 @@ public class FileAnalyzer {
 		this.overRatio = Double.parseDouble(paramList[5]);
 	}
 
+	//Checks complexity ratio against the limits and handles those by creating markers
 	private void handleComplexityVal(double complexityVal, String desc, int lineNumber) {
 		if (complexityVal < this.closeRatio) {
 			return;

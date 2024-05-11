@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
+	<!-- The startup point is used to let the IStartup class actually run at startup and add the listener -->
 	<extension point="org.eclipse.ui.startup">
 	   <startup class="main.StartUpClass"/>
 	</extension>
+<!-- Defines the marker type that is used for marking with the id -->
 <extension id="ElegancePlugin.methodMarker" point="org.eclipse.core.resources.markers" name="My Basic Marker"> 
-      <persistent value="false"/> 
+      <persistent value="false"/>
+      <!-- I truly do not know why I need these markers as the parents, but I do -->
       <super type="org.eclipse.core.resources.problemmarker"/> 
-      <super type="org.eclipse.core.resources.textmarker"/> 
-      <!--<attribute name="owner"/> -->
+      <super type="org.eclipse.core.resources.textmarker"/>
    </extension> 
 </plugin>
