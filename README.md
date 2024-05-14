@@ -3,6 +3,8 @@ _By Andrew Repine (repineap@rose-hulman.edu)_
 
 This tool is meant as a plugin to be used with the Eclipse IDE in classrooms to teach students better programming practices by guiding them towards less complex solutions. I will dive into the interworkings and actual mechanics behind this, but I first want to give a guide for any users intending to program Eclipse plugins on their own, or build upon the one I have created.
 
+# [Demo Video](https://youtu.be/aUVvYKI1RaA?si=mNEh6ci_S3f608sp "Demo Link")
+
 ## Plugin Development Basic User Guide
 ### Downloading the correct IDE
 To install the tools needed for Eclipse plugin development, you must navigate to the **install new software** option in Eclipse, select from the dropdown **The Eclipse Project Updates**, then select **Eclipse Plugin Development Tools** and install. 
