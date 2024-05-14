@@ -15,14 +15,17 @@ To install the tools needed for Eclipse plugin development, you must navigate to
 - [Javaparser](https://javadoc.io/doc/com.github.javaparser/javaparser-core/latest/index.html "Javaparser Doc") [V 3.25.5]
   - Used to crawl the abstract syntax tree of the source code of files being analyzed to generate a score
 - [org.eclipse.core.resources](https://help.eclipse.org/latest/index.jsp?topic=%2Forg.eclipse.platform.doc.isv%2Freference%2Fapi%2Forg%2Feclipse%2Fcore%2Fresources%2Fpackage-summary.html "Resources Doc") [V 3.17.0]
+  - DESCRIPTION
 - [org.eclipse.ui](https://archive.eclipse.org/eclipse/downloads/documentation/2.0/html/plugins/org.eclipse.platform.doc.isv/reference/api/org/eclipse/ui/package-summary.html "UI Doc") [V 3.201.0]
+  - DESCRIPTION
 - [org.eclipse.core.runtime](https://help.eclipse.org/latest/nftopic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/core/runtime/package-summary.html "Runtime Doc") [V 3.25.0]
+  - DESCRIPTION
 
 #### Simple Description of Each Java File
 - StartUpClass.java
   - In charge of registereing our _IResourceChangeListener_ with the workspace, to keep track of the changes to files to make updates when they are changed, runs on startup leading to the need for the _IStartup_ implementation.
 - FileChangeListener.java
-  - The __IResourceChangeListener_ that is registered, which detects when any _IResource_ changes, and in a higher functionality description it filters these events to make sure it is only code updates to .java files and then it runs the _FileAnalyzer_ on it.
+  - The _IResourceChangeListener_ that is registered, which detects when any _IResource_ changes, and in a higher functionality description it filters these events to make sure it is only code updates to .java files and then it runs the _FileAnalyzer_ on it.
 - FileAnalyzer.java
   - **See Below**
 - Method.java
