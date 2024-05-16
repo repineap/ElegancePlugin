@@ -11,27 +11,28 @@ import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
 public class ConfigGenerator {
 	
-	public static final String SYSTEM_SEP = File.separator;
 	public static final double VERSION = 2.0;
-	public static final double LOOPCOST = 2.0;
-	public static final double LOOPDEPTHCOST = 4.0;
-	public static final double BRANCHCOST = 1.0;
-	public static final double BRANCHDEPTHCOST = 1.5;
-	public static final double CLOSEVALUE = 2.0;
-	public static final double OVERVALUE = 5.0;
+//	public static final double LOOPCOST = 2.0;
+//	public static final double LOOPDEPTHCOST = 4.0;
+//	public static final double BRANCHCOST = 1.0;
+//	public static final double BRANCHDEPTHCOST = 1.5;
+//	public static final double CLOSEVALUE = 2.0;
+//	public static final double OVERVALUE = 5.0;
+	private double loopCost = 2.0, loopDepthCost = 4.0, branchCost = 1.0, branchDepthCost = 1.5, closeRatio = 2.0, overRatio = 5.0;
 	private ArrayList<Method> methodList;
 	
-	public ConfigGenerator(File f) {
-		File configFolder = new File(System.getProperty("user.dir") + SYSTEM_SEP + "configs" + SYSTEM_SEP);
+	public ConfigGenerator(File f, String params) {
+		File configFolder = new File(System.getProperty("user.dir") + File.separator + "configs" + File.separator);
 		if (!configFolder.exists()) {
             if (!configFolder.mkdirs()) {
             	System.err.println("Failed to create folder");
                 return;
             }
         }
+		this.setParamValues(params);
 		methodList = new ArrayList<>();
 		String newConfigName = f.getName().split("\\.")[0] + "-config.txt";
-		File configFile = new File(configFolder + SYSTEM_SEP + newConfigName);
+		File configFile = new File(configFolder + File.separator + newConfigName);
 		CompilationUnit cu;
 		try {
 			cu = StaticJavaParser.parse(f);
@@ -45,10 +46,10 @@ public class ConfigGenerator {
 		try {
 			writer = new PrintWriter(configFile);
 			writer.println("Version " + VERSION);
-			writer.println(String.format("params:%.1f,%.1f,%.1f,%.1f,%.1f,%.1f", LOOPCOST, LOOPDEPTHCOST, BRANCHCOST, BRANCHDEPTHCOST, CLOSEVALUE, OVERVALUE));
+			writer.println(String.format("params:%.1f,%.1f,%.1f,%.1f,%.1f,%.1f", loopCost, loopDepthCost, branchCost, branchDepthCost, closeRatio, overRatio));
 			cu.accept(new MethodVisitor(), null);
 			for (Method m : methodList) {
-				writer.println(String.format("%s:%.1f", m.getName(), m.calculateComplexity(LOOPCOST, LOOPDEPTHCOST, BRANCHCOST, BRANCHDEPTHCOST)));
+				writer.println(String.format("%s:%.1f", m.getName(), m.calculateComplexity(loopCost, loopDepthCost, branchCost, branchDepthCost)));
 			}
 			writer.close();
 			
@@ -68,4 +69,17 @@ public class ConfigGenerator {
             super.visit(methodNode, arg);
         }
     }
+    
+    private void setParamValues(String paramLine) {
+    	if (paramLine == null) {
+    		return;
+    	}
+		String[] paramList = paramLine.split(":")[1].split(",");
+		this.loopCost = Double.parseDouble(paramList[0]);
+		this.loopDepthCost = Double.parseDouble(paramList[1]);
+		this.branchCost = Double.parseDouble(paramList[2]);
+		this.branchDepthCost = Double.parseDouble(paramList[3]);
+		this.closeRatio = Double.parseDouble(paramList[4]);
+		this.overRatio = Double.parseDouble(paramList[5]);
+	}
 }

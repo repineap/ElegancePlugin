@@ -1,14 +1,22 @@
 import javax.swing.*;
+
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
 public class MainFileCollector {
-	
+
 	public MainFileCollector() {
 		JFrame frame = new JFrame("File Chooser Example");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(400, 200);
+        frame.setSize(500, 200);
+        frame.setLayout(new BorderLayout());
+        
+        JPanel topPanel = new JPanel();
+        JTextField paramTextField = new JTextField("params:2.0,4.0,1.0,1.0,2.0,5.0");
+        topPanel.add(paramTextField);
         
         JPanel panel = new JPanel();
 
@@ -19,7 +27,8 @@ public class MainFileCollector {
         JButton configCreateButton = new JButton("Generate config files");
         panel.add(configCreateButton);
         
-        frame.add(panel);
+        frame.add(panel, BorderLayout.NORTH);
+        frame.add(topPanel, BorderLayout.CENTER);
 
         fileAnalyzeButton.addActionListener(new ActionListener() {
             @Override
@@ -43,7 +52,7 @@ public class MainFileCollector {
                  fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
                  int result = fileChooser.showOpenDialog(frame);
                  if (result == JFileChooser.APPROVE_OPTION) {
-                     new ConfigGenerator(fileChooser.getSelectedFile());
+                     new ConfigGenerator(fileChooser.getSelectedFile(), paramTextField.getText());
                  } else {
                      System.out.println("Open command canceled by user.");
                  }
@@ -57,7 +66,7 @@ public class MainFileCollector {
 		if (type.charAt(1) == 'a') {
 			new StudentAnalyzer(new File(filePath));
 		} else if (type.charAt(1) == 'c') {
-			new ConfigGenerator(new File(filePath));
+			new ConfigGenerator(new File(filePath), null);
 		} else {
 			System.out.println("Invalid command");
 		}
